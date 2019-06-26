@@ -1,0 +1,19 @@
+[package]
+name = "blocking-test"
+version = "0.1.0"
+authors = ["Julius de Bruijn <bruijn@prisma.io>"]
+edition = "2018"
+
+[dependencies]
+rusqlite = { git = "https://github.com/pimeys/rusqlite", features = ["chrono", "bundled"] }
+tokio = "0.1"
+tokio-threadpool = "0.1"
+futures = "0.1"
+r2d2 = "0.8"
+r2d2_sqlite = { git = "https://github.com/pimeys/r2d2-sqlite" }
+postgres = { version = "0.16.0-rc.1", features = ["with-serde_json-1", "with-chrono-0_4", "with-uuid-0_7"]}
+r2d2_postgres = { version = "0.15.0-rc.1" }
+tokio-postgres-native-tls = { version = "0.1.0-rc.1" }
+tokio-postgres = { version = "0.4.0-rc.2" }
+tower-web = "0.3"
+lazy_static = "1.3"
