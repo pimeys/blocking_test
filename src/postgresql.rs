@@ -1,22 +1,26 @@
 use super::*;
 use futures::future::{err, lazy, ok, poll_fn};
-use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::{Transaction as SqliteTransaction, NO_PARAMS};
+use postgres::{NoTls, Transaction as PostgresTransaction};
+use r2d2_postgres::PostgresConnectionManager;
 use std::sync::Arc;
 use tokio_threadpool::blocking;
 
-pub struct Sqlite {
-    pool: Arc<r2d2::Pool<SqliteConnectionManager>>,
+pub struct Postgres {
+    pool: Arc<r2d2::Pool<PostgresConnectionManager<NoTls>>>,
 }
 
-impl AsyncConnector for Sqlite {
+impl AsyncConnector for Postgres {
     fn new() -> Self {
-        let pool = r2d2::Pool::builder()
-            .build(SqliteConnectionManager::memory())
-            .unwrap();
-        let pool = Arc::new(pool);
+        let manager = PostgresConnectionManager::new(
+            "user = postgres host = localhost password = prisma"
+                .parse()
+                .unwrap(),
+            NoTls,
+        );
 
-        Sqlite { pool }
+        let pool = Arc::new(r2d2::Pool::builder().build(manager).unwrap());
+
+        Self { pool }
     }
 
     fn async_tx<F, T>(&self, f: F) -> FutRes<T>
@@ -29,9 +33,8 @@ impl AsyncConnector for Sqlite {
         let fut = lazy(move || {
             poll_fn(move || {
                 blocking(|| {
-                    let mut conn = pool.get()?;
-                    let mut tx = conn.transaction()?;
-                    tx.set_prepared_statement_cache_capacity(65536);
+                    let mut client = pool.get()?;
+                    let mut tx = client.transaction()?;
 
                     let result = f(&mut tx);
 
@@ -53,14 +56,15 @@ impl AsyncConnector for Sqlite {
     }
 }
 
-impl<'a> Transaction for SqliteTransaction<'a> {
+impl<'a> Transaction for PostgresTransaction<'a> {
     fn filter(&mut self, q: &str) -> Res<Vec<i64>> {
-        let mut stmt = self.prepare_cached(q)?;
-        let mut rows = stmt.query(NO_PARAMS)?;
+        let stmt = self.prepare(q)?;
+        let rows = self.query(&stmt, &[])?;
         let mut result = Vec::new();
 
-        while let Some(row) = rows.next()? {
-            result.push(row.get(0).unwrap());
+        for row in rows {
+            let i: i32 = row.get(0);
+            result.push(i as i64)
         }
 
         Ok(result)

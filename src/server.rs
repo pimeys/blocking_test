@@ -20,7 +20,7 @@ impl_web! {
         #[get("/")]
         fn index(&self) -> impl Future<Item = String, Error = Error> + Send {
             self.db.async_tx(|tx| {
-                let one = *tx.filter("SELECT 1").unwrap().first().unwrap();
+                let one = *tx.filter("SELECT 2").unwrap().first().unwrap();
                 Ok(one.to_string())
             })
         }

@@ -1,13 +1,14 @@
 #![recursion_limit = "128"]
 
 #[macro_use]
-
 extern crate tower_web;
 
+pub mod postgresql;
 pub mod server;
 pub mod sqlite;
 
 use futures::Future;
+use postgresql::Postgres;
 use server::Server;
 use sqlite::Sqlite;
 use std::{error, fmt};
@@ -20,6 +21,7 @@ pub type Res<T> = Result<T, Error>;
 pub enum Error {
     R2d2,
     Rusqlite,
+    Postgres,
     Other,
     Blocking,
 }
@@ -36,6 +38,12 @@ impl From<rusqlite::Error> for Error {
     }
 }
 
+impl From<tokio_postgres::error::Error> for Error {
+    fn from(_: tokio_postgres::error::Error) -> Self {
+        Error::Postgres
+    }
+}
+
 impl From<BlockingError> for Error {
     fn from(_: BlockingError) -> Self {
         Error::Blocking
@@ -49,6 +57,7 @@ impl fmt::Display for Error {
             Error::Rusqlite => write!(f, "rusqlite"),
             Error::R2d2 => write!(f, "r2d2"),
             Error::Blocking => write!(f, "blocking"),
+            Error::Postgres => write!(f, "postgres"),
         }
     }
 }
@@ -60,6 +69,7 @@ impl error::Error for Error {
             Error::R2d2 => "r2d2",
             Error::Rusqlite => "rusqlite",
             Error::Blocking => "blocking",
+            Error::Postgres => "postgres",
         }
     }
 
@@ -70,12 +80,6 @@ impl error::Error for Error {
 
 pub trait Transaction {
     fn filter(&mut self, q: &str) -> Res<Vec<i64>>;
-}
-
-pub trait SyncConnector {
-    fn with_transaction<F, T>(&self, f: F) -> Res<T>
-    where
-        F: FnOnce(&mut dyn Transaction) -> Res<T>;
 }
 
 pub type FutRes<T> = Box<dyn Future<Item = T, Error = Error> + Send>;
@@ -93,7 +97,7 @@ fn main() {
     let addr = "127.0.0.1:8080".parse().expect("Invalid address");
     println!("Listening on http://{}", addr);
 
-    let server: Server<Sqlite> = Server::new();
+    let server: Server<Postgres> = Server::new();
 
     ServiceBuilder::new().resource(server).run(&addr).unwrap()
 }
