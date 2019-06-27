@@ -1,20 +1,19 @@
 use super::*;
 use futures01::Future;
 use futures03::future::TryFutureExt;
-use std::sync::Arc;
 
 pub struct Server<T>
 where
     T: AsyncConnector + Send + Sync + 'static,
 {
-    db: Arc<T>,
+    db: T,
 }
 
 impl_web! {
     impl<T> Server<T> where T: AsyncConnector + Send + Sync + 'static {
         pub fn new() -> Self {
             Self {
-                db: Arc::new(T::new())
+                db: T::new()
             }
         }
 
