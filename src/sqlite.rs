@@ -3,7 +3,7 @@ use futures01::{
     future::{err, lazy, ok, poll_fn},
     Future,
 };
-use futures03::compat::Future01CompatExt;
+use futures03::{compat::Future01CompatExt, future::FutureObj};
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Transaction as SqliteTransaction, NO_PARAMS};
 use std::sync::Arc;
@@ -23,7 +23,7 @@ impl AsyncConnector for Sqlite {
         Sqlite { pool }
     }
 
-    fn async_tx<F, T>(&self, f: F) -> DBIO<T>
+    fn async_tx<F, T>(&self, f: F) -> FutureObj<'static, Res<T>>
     where
         T: Send + Sync + 'static,
         F: Fn(&mut dyn Transaction) -> Res<T> + Send + Sync + 'static,
@@ -54,7 +54,7 @@ impl AsyncConnector for Sqlite {
         })
         .compat();
 
-        DBIO(Box::pin(fut))
+        FutureObj::new(Box::new(fut))
     }
 }
 

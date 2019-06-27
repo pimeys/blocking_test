@@ -27,7 +27,7 @@ impl AsyncConnector for Postgres {
         Self { pool }
     }
 
-    fn async_tx<F, T>(&self, f: F) -> DBIO<T>
+    fn async_tx<F, T>(&self, f: F) -> FutureObj<'static, Res<T>>
     where
         T: Send + Sync + 'static,
         F: Fn(&mut dyn Transaction) -> Res<T> + Send + Sync + 'static,
@@ -57,7 +57,7 @@ impl AsyncConnector for Postgres {
         })
         .compat();
 
-        DBIO(Box::pin(fut))
+        FutureObj::new(Box::new(fut))
     }
 }
 
