@@ -1,6 +1,6 @@
 # Herp derp
 
-Try it out:
+Try it out (with the latest nightly!):
 
 ``` bash
 cargo +nightly run

@@ -1,5 +1,6 @@
 use super::*;
-use futures::Future;
+use futures01::Future;
+use futures03::future::{FutureExt, TryFutureExt};
 use std::sync::Arc;
 
 pub struct Server<T>
@@ -22,7 +23,7 @@ impl_web! {
             self.db.async_tx(|tx| {
                 let one = *tx.filter("SELECT 2").unwrap().first().unwrap();
                 Ok(one.to_string())
-            })
+            }).boxed().compat()
         }
     }
 }
