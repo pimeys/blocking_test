@@ -18,6 +18,7 @@ pub use sqlite::*;
 
 use server::Server;
 use tower_web::ServiceBuilder;
+use futures03::future::FutureObj;
 
 pub type Res<T> = Result<T, Error>;
 
@@ -25,8 +26,23 @@ pub trait Transaction {
     fn filter(&mut self, q: &str) -> Res<Vec<i64>>;
 }
 
-pub trait AsyncConnector {
+pub trait AsyncConnector where Self: Sync {
     fn new() -> Self;
+
+    /// Some async/await magic for fun. See the hoops you have to play through
+    /// to get this working...
+    fn get_four(&self) -> FutureObj<'static, Res<i64>> {
+        let fut = self.async_tx(|tx| {
+            let two = *tx.filter("SELECT 2").unwrap().first().unwrap();
+            Ok(two)
+        });
+
+        FutureObj::new(Box::new(
+            async move {
+                Ok(fut.await? * 2)
+            }
+        ))
+    }
 
     fn async_tx<F, T>(&self, f: F) -> DBIO<T>
     where
