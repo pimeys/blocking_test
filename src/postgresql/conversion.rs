@@ -1,9 +1,9 @@
-use postgres::{Row, types::Type};
-use serde_json::{Value, Map, Number};
-use uuid::Uuid;
-use rust_decimal::Decimal;
-use chrono::{DateTime, NaiveDateTime, Utc};
 use crate::IntoJson;
+use chrono::{DateTime, NaiveDateTime, Utc};
+use postgres::{types::Type, Row};
+use rust_decimal::Decimal;
+use serde_json::{Map, Number, Value};
+use uuid::Uuid;
 
 impl IntoJson for Vec<Row> {
     fn into_json(self) -> crate::Result<Value> {
@@ -16,6 +16,7 @@ impl IntoJson for Vec<Row> {
                 let column_name: String = column.name().into();
 
                 let value = match *column.type_() {
+                    Type::VOID => Value::Null,
                     Type::BOOL => match row.try_get(idx)? {
                         Some(val) => Value::Bool(val),
                         None => Value::Null,
@@ -117,11 +118,7 @@ impl IntoJson for Vec<Row> {
                             let val: Vec<f32> = val;
                             Value::Array(
                                 val.into_iter()
-                                    .map(|x| {
-                                        Value::Number(
-                                            Number::from_f64(f64::from(x)).unwrap(),
-                                        )
-                                    })
+                                    .map(|x| Value::Number(Number::from_f64(f64::from(x)).unwrap()))
                                     .collect(),
                             )
                         }
@@ -141,11 +138,7 @@ impl IntoJson for Vec<Row> {
                     Type::BOOL_ARRAY => match row.try_get(idx)? {
                         Some(val) => {
                             let val: Vec<bool> = val;
-                            Value::Array(
-                                val.into_iter()
-                                    .map(|x| Value::Bool(x))
-                                    .collect(),
-                            )
+                            Value::Array(val.into_iter().map(|x| Value::Bool(x)).collect())
                         }
                         None => Value::Null,
                     },
@@ -170,9 +163,7 @@ impl IntoJson for Vec<Row> {
                                 val.into_iter()
                                     .map(|x| {
                                         let val: f64 = x.to_string().parse().unwrap();
-                                        Value::Number(
-                                            Number::from_f64(val).unwrap(),
-                                        )
+                                        Value::Number(Number::from_f64(val).unwrap())
                                     })
                                     .collect(),
                             )
@@ -183,11 +174,7 @@ impl IntoJson for Vec<Row> {
                         match row.try_get(idx)? {
                             Some(val) => {
                                 let val: Vec<String> = val;
-                                Value::Array(
-                                    val.into_iter()
-                                        .map(|x| Value::String(x))
-                                        .collect(),
-                                )
+                                Value::Array(val.into_iter().map(|x| Value::String(x)).collect())
                             }
                             None => Value::Null,
                         }

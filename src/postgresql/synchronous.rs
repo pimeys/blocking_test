@@ -1,5 +1,5 @@
 use crate::{AsyncConnector, IntoJson};
-use futures::future::{FutureObj, self};
+use futures::future::{self, FutureObj};
 use postgres::NoTls;
 use r2d2_postgres::PostgresConnectionManager;
 use std::sync::Arc;
@@ -8,8 +8,8 @@ pub struct Synchronous {
     pool: Arc<r2d2::Pool<PostgresConnectionManager<NoTls>>>,
 }
 
-impl AsyncConnector for Synchronous {
-    fn new() -> Self {
+impl Synchronous {
+    pub fn new() -> Self {
         let manager = PostgresConnectionManager::new(
             "user = postgres host = localhost password = prisma"
                 .parse()
@@ -17,11 +17,14 @@ impl AsyncConnector for Synchronous {
             NoTls,
         );
 
-        let pool = Arc::new(r2d2::Pool::builder().build(manager).unwrap());
+        let builder = r2d2::Pool::builder().max_size(10);
+        let pool = Arc::new(builder.build(manager).unwrap());
 
         Self { pool }
     }
+}
 
+impl AsyncConnector for Synchronous {
     fn run(&self, query: Arc<String>) -> FutureObj<'static, crate::Result<serde_json::Value>> {
         let fetch_json = || {
             let mut client = self.pool.get()?;

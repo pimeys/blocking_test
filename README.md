@@ -3,7 +3,13 @@
 Try it out (with the latest nightly!):
 
 ``` bash
-cargo +nightly run
+cargo +nightly run -- --threaded
+```
+
+Or for the single-threaded blocking version:
+
+``` bash
+cargo +nightly run -- --sync
 ```
 
 The service runs in `localhost:8080` and can be used with a web client.

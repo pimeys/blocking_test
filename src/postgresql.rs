@@ -1,7 +1,7 @@
 mod conversion;
-mod threaded;
 mod synchronous;
+mod threaded;
 
-pub use threaded::*;
-pub use synchronous::*;
 pub use conversion::*;
+pub use synchronous::*;
+pub use threaded::*;

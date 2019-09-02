@@ -9,8 +9,8 @@ pub struct Threaded {
     pool: Arc<r2d2::Pool<PostgresConnectionManager<NoTls>>>,
 }
 
-impl AsyncConnector for Threaded {
-    fn new() -> Self {
+impl Threaded {
+    pub fn new() -> Self {
         let manager = PostgresConnectionManager::new(
             "user = postgres host = localhost password = prisma"
                 .parse()
@@ -18,11 +18,15 @@ impl AsyncConnector for Threaded {
             NoTls,
         );
 
-        let pool = Arc::new(r2d2::Pool::builder().build(manager).unwrap());
+        let builder = r2d2::Pool::builder().max_size(10);
+        let pool = Arc::new(builder.build(manager).unwrap());
 
         Self { pool }
     }
 
+}
+
+impl AsyncConnector for Threaded {
     fn run(&self, query: Arc<String>) -> FutureObj<'static, crate::Result<serde_json::Value>> {
         let pool = self.pool.clone();
 

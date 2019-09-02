@@ -1,19 +1,19 @@
 use super::*;
-use std::{collections::HashMap, sync::Arc};
 use async_std::sync::RwLock;
+use std::{collections::HashMap, sync::Arc};
 
-pub struct Server<T>
-where
-    T: AsyncConnector + Send + Sync + 'static,
+pub struct Server
 {
-    db: T,
+    db: Box<dyn AsyncConnector + Send + Sync + 'static>,
     queries: RwLock<HashMap<String, Arc<String>>>,
 }
 
-impl<T> Server<T> where T: AsyncConnector + Send + Sync + 'static {
-    pub fn new() -> Self {
+impl Server
+{
+    pub fn new(db: Box<dyn AsyncConnector + Send + Sync + 'static>) -> Self
+    {
         Self {
-            db: T::new(),
+            db,
             queries: RwLock::new(HashMap::new()),
         }
     }
@@ -27,12 +27,8 @@ impl<T> Server<T> where T: AsyncConnector + Send + Sync + 'static {
         let queries = self.queries.read().await;
 
         match queries.get(query_name) {
-            Some(query) => {
-                Ok(self.db.run(query.clone()).await?)
-            },
-            None => {
-                Err(crate::Error::NotFound)
-            }
+            Some(query) => Ok(self.db.run(query.clone()).await?),
+            None => Err(crate::Error::NotFound),
         }
     }
 }

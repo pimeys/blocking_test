@@ -20,3 +20,4 @@ chrono = "0.4"
 uuid = "0.7"
 rust_decimal = { git = "https://github.com/pimeys/rust-decimal.git", features = ["postgres"] }
 http = "0.1"
+clap = "2.33"
