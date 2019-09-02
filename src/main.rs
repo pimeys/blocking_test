@@ -11,17 +11,18 @@ pub use server::*;
 use server::Server;
 use futures::future::FutureObj;
 use tide::{response, App, Context, EndpointResult, error::ResultExt};
+use std::sync::Arc;
 use http::status::StatusCode;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-pub trait Transaction {
-    fn filter(&mut self, q: &str) -> crate::Result<Vec<i64>>;
+pub trait IntoJson {
+    fn into_json(self) -> crate::Result<serde_json::Value>;
 }
 
 pub trait AsyncConnector where Self: Sync {
     fn new() -> Self;
-    fn run(&self, query: String) -> FutureObj<'static, crate::Result<serde_json::Value>>;
+    fn run(&self, query: Arc<String>) -> FutureObj<'static, crate::Result<serde_json::Value>>;
 }
 
 async fn save_query<T>(mut cx: Context<Server<T>>) -> EndpointResult<()>
@@ -52,7 +53,7 @@ where
 fn main() {
     println!("Listening on http://127.0.0.1:8080");
 
-    let server: Server<postgresql::Postgres> = Server::new();
+    let server: Server<postgresql::Threaded> = Server::new();
     let mut app = App::with_state(server);
 
     app.at("/:name").get(run_query).post(save_query);
