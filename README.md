@@ -6,7 +6,7 @@ Try it out (with the latest nightly!):
 cargo +nightly run
 ```
 
-The service runs in `localhost:8080` and can be communicated with a web client.
+The service runs in `localhost:8080` and can be used with a web client.
 
 To save a new query:
 
