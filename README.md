@@ -1,15 +1,21 @@
 # Herp derp
 
-Try it out (with the latest nightly!):
+Multi-threaded version:
 
 ``` bash
 cargo +nightly run -- --threaded
 ```
 
-Or for the single-threaded blocking version:
+Single-threaded blocking version:
 
 ``` bash
 cargo +nightly run -- --sync
+```
+
+Asynchronous version:
+
+``` bash
+cargo +nightly run -- --async
 ```
 
 The service runs in `localhost:8080` and can be used with a web client.
