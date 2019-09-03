@@ -4,6 +4,7 @@ use futures01::{Stream, future::{Future as _, Either, err}};
 use postgres::NoTls;
 use bb8_postgres::PostgresConnectionManager;
 use std::sync::Arc;
+use serde_json::Value;
 
 pub struct Asynchronous {
     pool: bb8::Pool<PostgresConnectionManager<NoTls>>,
@@ -34,9 +35,10 @@ impl AsyncConnector for Asynchronous {
                 Ok(stmt) => {
                     let f = client
                         .query(&stmt, &[])
+                        .map(|row| row.into_json().unwrap())
                         .collect()
                         .then(move |res| match res {
-                            Ok(rows) => Ok((rows.into_json().unwrap(), client)),
+                            Ok(rows) => Ok((Value::Array(rows), client)),
                             Err(_) => Err((Error::Postgres, client)),
                         });
 
