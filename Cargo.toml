@@ -21,3 +21,8 @@ uuid = "0.7"
 rust_decimal = { git = "https://github.com/pimeys/rust-decimal.git", features = ["postgres"] }
 http = "0.1"
 clap = "2.33"
+bb8 = "0.3.1"
+bb8-postgres = "0.3.1"
+futures01 = { version = "0.1", package = "futures" }
+runtime = "0.3.0-alpha.7"
+runtime-tokio = "0.3.0-alpha.6"

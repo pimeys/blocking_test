@@ -48,7 +48,8 @@ async fn run_query(cx: Context<Server>) -> EndpointResult
     }
 }
 
-fn main() {
+#[runtime::main(runtime_tokio::Tokio)]
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let matches = clap::App::new("Database performance testing")
         .version("1.0")
         .arg(
@@ -65,6 +66,13 @@ fn main() {
                 .takes_value(false)
                 .required(false),
         )
+        .arg(
+            clap::Arg::with_name("async")
+                .long("async")
+                .help("Queries are run asynchronously in an event loop.")
+                .takes_value(false)
+                .required(false),
+        )
         .get_matches();
 
     let server = if matches.is_present("threaded") {
@@ -72,14 +80,21 @@ fn main() {
 
         let connector = postgresql::Threaded::new();
         Server::new(Box::new(connector))
-    } else {
+    } else if matches.is_present("sync") {
         println!("Blocking server listening on http://127.0.0.1:8080");
 
         let connector = postgresql::Synchronous::new();
+        Server::new(Box::new(connector))
+    } else {
+        println!("Asynchronous server listening on http://127.0.0.1:8080");
+
+        let connector = postgresql::Asynchronous::new();
         Server::new(Box::new(connector))
     };
 
     let mut app = App::with_state(server);
     app.at("/:name").get(run_query).post(save_query);
-    app.run("127.0.0.1:8080").unwrap();
+    app.serve("127.0.0.1:8080").await?;
+
+    Ok(())
 }

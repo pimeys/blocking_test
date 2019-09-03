@@ -17,7 +17,7 @@ impl Synchronous {
             NoTls,
         );
 
-        let builder = r2d2::Pool::builder().max_size(10);
+        let builder = r2d2::Pool::builder().max_size(10).test_on_check_out(false);
         let pool = Arc::new(builder.build(manager).unwrap());
 
         Self { pool }

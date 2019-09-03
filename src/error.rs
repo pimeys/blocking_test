@@ -3,6 +3,7 @@ use std::{error, fmt};
 #[derive(Debug)]
 pub enum Error {
     R2d2,
+    Bb8,
     Postgres,
     Other,
     NotFound,
@@ -13,6 +14,7 @@ impl fmt::Display for Error {
         match self {
             Error::Other => write!(f, "other"),
             Error::R2d2 => write!(f, "r2d2"),
+            Error::Bb8 => write!(f, "bb8"),
             Error::Postgres => write!(f, "postgres"),
             Error::NotFound => write!(f, "not_found"),
         }
@@ -24,6 +26,7 @@ impl error::Error for Error {
         match self {
             Error::Other => "other",
             Error::R2d2 => "r2d2",
+            Error::Bb8 => "bb8",
             Error::Postgres => "postgres",
             Error::NotFound => "not_found",
         }
