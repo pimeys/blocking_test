@@ -2,7 +2,7 @@ use crate::{AsyncConnector, IntoJson};
 use futures::future::{self, FutureObj};
 use postgres::NoTls;
 use r2d2_postgres::PostgresConnectionManager;
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 pub struct Synchronous {
     pool: Arc<r2d2::Pool<PostgresConnectionManager<NoTls>>>,
@@ -17,7 +17,11 @@ impl Synchronous {
             NoTls,
         );
 
-        let builder = r2d2::Pool::builder().max_size(10).test_on_check_out(false);
+        let builder = r2d2::Pool::builder()
+            .max_size(10)
+            .connection_timeout(Duration::from_secs(5))
+            .test_on_check_out(false);
+
         let pool = Arc::new(builder.build(manager).unwrap());
 
         Self { pool }

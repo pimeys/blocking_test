@@ -3,7 +3,7 @@ use futures::{future::FutureObj, compat::Future01CompatExt};
 use futures01::{Stream, future::{Future as _, Either, err}};
 use postgres::NoTls;
 use bb8_postgres::PostgresConnectionManager;
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 use serde_json::Value;
 
 pub struct Asynchronous {
@@ -17,7 +17,11 @@ impl Asynchronous {
             NoTls,
         );
 
-        let builder = bb8::Pool::builder().max_size(10).test_on_check_out(false);
+        let builder = bb8::Pool::builder()
+            .max_size(10)
+            .connection_timeout(Duration::from_secs(5))
+            .test_on_check_out(false);
+
         let pool = builder.build_unchecked(manager);
 
         Self { pool }

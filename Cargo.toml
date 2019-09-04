@@ -26,3 +26,5 @@ bb8-postgres = "0.3.1"
 futures01 = { version = "0.1", package = "futures" }
 runtime = "0.3.0-alpha.7"
 runtime-tokio = "0.3.0-alpha.6"
+log = "0.4"
+pretty_env_logger = "0.3"

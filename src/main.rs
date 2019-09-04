@@ -1,5 +1,8 @@
 #![recursion_limit = "128"]
 
+#[macro_use]
+extern crate log;
+
 mod error;
 mod postgresql;
 mod server;
@@ -44,12 +47,17 @@ async fn run_query(cx: Context<Server>) -> EndpointResult
     match cx.state().run(&name).await {
         Ok(json) => Ok(response::json(json)),
         Err(crate::Error::NotFound) => Err(StatusCode::NOT_FOUND.into()),
+        Err(crate::Error::Postgres) => Err(StatusCode::INTERNAL_SERVER_ERROR.into()),
+        Err(crate::Error::Bb8) => Err(StatusCode::INTERNAL_SERVER_ERROR.into()),
+        Err(crate::Error::R2d2) => Err(StatusCode::INTERNAL_SERVER_ERROR.into()),
         Err(e) => panic!(e),
     }
 }
 
 #[runtime::main(runtime_tokio::Tokio)]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pretty_env_logger::init();
+
     let matches = clap::App::new("Database performance testing")
         .version("1.0")
         .arg(
@@ -76,17 +84,17 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
         .get_matches();
 
     let server = if matches.is_present("threaded") {
-        println!("Multithread server listening on http://127.0.0.1:8080");
+        info!("Multithread server listening on http://127.0.0.1:8080");
 
         let connector = postgresql::Threaded::new();
         Server::new(Box::new(connector))
     } else if matches.is_present("sync") {
-        println!("Blocking server listening on http://127.0.0.1:8080");
+        info!("Blocking server listening on http://127.0.0.1:8080");
 
         let connector = postgresql::Synchronous::new();
         Server::new(Box::new(connector))
     } else {
-        println!("Asynchronous server listening on http://127.0.0.1:8080");
+        info!("Asynchronous server listening on http://127.0.0.1:8080");
 
         let connector = postgresql::Asynchronous::new();
         Server::new(Box::new(connector))
